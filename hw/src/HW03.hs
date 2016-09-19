@@ -34,15 +34,54 @@ type State = String -> Int
 -- Exercise 1 -----------------------------------------
 
 extend :: State -> String -> Int -> State
-extend = undefined
+extend st s i = st'
+  where
+    st' a
+      | (a == s) = i
+      | otherwise = (st a)
 
 empty :: State
-empty = undefined
+empty _ = 0
 
 -- Exercise 2 -----------------------------------------
 
 evalE :: State -> Expression -> Int
-evalE = undefined
+evalE st (Var s) = st s
+evalE st (Val i) = i
+evalE st (Op expr1 op expr2) =
+  case op of
+    Plus   -> val1 + val2
+    Minus  -> val1 - val2
+    Times  -> val1 * val2
+    Divide -> val1 `div` val2
+    Gt     -> i
+      where
+        i
+          | val1 > val2 = 1
+          | otherwise   = 0
+    Ge     -> i
+      where
+        i
+          | val1 >= val2 = 1
+          | otherwise    = 0
+    Lt     -> i
+      where
+        i
+          | val1 < val2 = 1
+          | otherwise   = 0
+    Le     -> i
+      where
+        i
+          | val1 <= val2 = 1
+          | otherwise    = 0
+    Eql    -> i
+      where
+        i
+          | val1 == val2 = 1
+          | otherwise    = 0
+    where
+      val1 = evalE st expr1
+      val2 = evalE st expr2
 
 -- Exercise 3 -----------------------------------------
 
@@ -54,16 +93,39 @@ data DietStatement = DAssign String Expression
                      deriving (Show, Eq)
 
 desugar :: Statement -> DietStatement
-desugar = undefined
-
+desugar st = case st of
+    Incr s -> DAssign s (Op (Var s) Plus (Val 1))
+    For sInit exp sUpdt sLoop ->  DSequence
+                                    (DSequence
+                                        (DSequence (desugar sInit) (desugar sLoop)) (desugar sUpdt))
+                                    (DWhile exp (DSequence (desugar sLoop) (desugar sUpdt)))
+    Assign s exp -> DAssign s exp
+    If exp st1 st2 -> DIf exp (desugar st1) (desugar st2)
+    While exp st -> DWhile exp (desugar st)
+    Sequence st1 st2 -> DSequence (desugar st1) (desugar st2)
+    Skip -> DSkip
 
 -- Exercise 4 -----------------------------------------
 
 evalSimple :: State -> DietStatement -> State
-evalSimple = undefined
+evalSimple st (DAssign s exp) = extend st s (evalE st exp)
+evalSimple st (DIf exp dst1 dst2)
+  | cond == 0 = evalSimple st dst2
+  | otherwise = evalSimple st dst1
+  where
+    cond = evalE st exp
+evalSimple st dwhile@(DWhile exp dst)
+  | cond == 0 = st
+  | otherwise = evalSimple (evalSimple st dst) dwhile
+  where
+    cond = evalE st exp
+evalSimple st (DSequence dst1 dst2) = evalSimple (evalSimple st dst1) dst2
+evalSimple st DSkip = st
 
 run :: State -> Statement -> State
-run = undefined
+run st stmt = evalSimple st dstmt
+  where
+    dstmt = desugar stmt
 
 -- Programs -------------------------------------------
 
