@@ -20,3 +20,6 @@ cabal.project.local
 
 # IntelliJ .idea
 .idea/
+
+# Workspace
+workspace/
