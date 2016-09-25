@@ -179,3 +179,10 @@ pat ::= _
     
 * Recursive data type
 data List t = Empty | Cons t (List t)
+
+Type Classes
+------------
+> {-# LANGUAGE FlexibleInstances #-}
+
+- Haskell uses type classes to implement ad-hoc polymorphism.
+
