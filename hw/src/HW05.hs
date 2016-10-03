@@ -12,6 +12,7 @@ import qualified Data.Map.Strict as Map
 import Parser
 
 import Data.Bits (xor)
+import Data.List (sortBy)
 
 -- Exercise 1 -----------------------------------------
 
@@ -95,7 +96,18 @@ test = do
 -- Exercise 7 -----------------------------------------
 
 undoTs :: Map String Integer -> [TId] -> [Transaction]
-undoTs = undefined
+undoTs m tids = acc (sortPay (> 0)) (sortPay (< 0)) tids []
+  where
+    acc :: [(String, Integer)] -> [(String, Integer)] -> [TId] -> [Transaction] -> [Transaction]
+    acc [] _ _ trs       = trs
+    acc _ [] _ trs       = trs
+    acc (x:payer) (y:payee) (t:ttid) trs
+      | (snd x) + (snd y) == 0 = acc payer payee ttid ((Transaction (fst x) (fst y) (snd x) t):trs)
+      | (snd x) + (snd y) >  0 = acc ((fst x, snd x + snd y):payer) payee ttid ((Transaction (fst x) (fst y) (-(snd y)) t):trs)
+      | otherwise              = acc payer ((fst y, snd x + snd y):payee) ttid ((Transaction (fst x) (fst y) (snd x) t):trs)
+    absdes x y = (abs $ snd x) > (abs $ snd x)
+    sortPay f = sortBy absdes $ filter f . snd $ toList m
+
 
 -- Exercise 8 -----------------------------------------
 
